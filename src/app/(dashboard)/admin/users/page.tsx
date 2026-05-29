@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { UserRoleTable } from '@/components/admin/UserRoleTable';
 import { Card } from '@/components/ui/Card';
 import { getAuthContext, isAdmin } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { AppUser } from '@/types/user';
 
 export default async function AdminUsersPage() {
@@ -16,11 +17,17 @@ export default async function AdminUsersPage() {
     redirect('/dashboard');
   }
 
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const profilesClient = admin ?? supabase;
+  const { data, error } = await profilesClient
     .from('profiles')
     .select('id, email, full_name, role')
     .order('full_name', { ascending: true })
     .order('email', { ascending: true });
+
+  if (error) {
+    throw new Error(`Unable to load users: ${error.message}`);
+  }
 
   const users = (data ?? []) as Array<Pick<AppUser, 'id' | 'email' | 'full_name' | 'role'>>;
 
@@ -32,7 +39,7 @@ export default async function AdminUsersPage() {
       </div>
 
       <Card>
-        <UserRoleTable users={users} />
+        <UserRoleTable currentUserId={user.id} users={users} />
       </Card>
     </div>
   );

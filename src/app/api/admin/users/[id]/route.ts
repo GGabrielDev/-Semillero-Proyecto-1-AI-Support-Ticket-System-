@@ -37,6 +37,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  if (params.data.id === user.id) {
+    return NextResponse.json({ error: 'You cannot change your own role.' }, { status: 400 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = UpdateUserRoleSchema.safeParse(body);
 
