@@ -8,6 +8,7 @@ import type { AppUser, UserRole } from '@/types/user';
 type UserRow = Pick<AppUser, 'id' | 'email' | 'full_name' | 'role'>;
 
 type UserRoleTableProps = {
+  currentUserId: string;
   users: UserRow[];
 };
 
@@ -17,7 +18,7 @@ const roleClasses: Record<UserRole, string> = {
   admin: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
 };
 
-export function UserRoleTable({ users }: UserRoleTableProps) {
+export function UserRoleTable({ currentUserId, users }: UserRoleTableProps) {
   const [rows, setRows] = useState(users);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export function UserRoleTable({ users }: UserRoleTableProps) {
                 <td className="py-4">
                   <select
                     className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-                    disabled={savingId === row.id}
+                    disabled={savingId === row.id || row.id === currentUserId}
                     onChange={(event) => updateRole(row.id, event.target.value as UserRole)}
                     value={row.role}
                   >
@@ -82,6 +83,9 @@ export function UserRoleTable({ users }: UserRoleTableProps) {
                     <option value="agent">Agent</option>
                     <option value="admin">Admin</option>
                   </select>
+                  {row.id === currentUserId ? (
+                    <p className="mt-2 text-xs text-slate-400">You cannot change your own role.</p>
+                  ) : null}
                 </td>
               </tr>
             ))}
