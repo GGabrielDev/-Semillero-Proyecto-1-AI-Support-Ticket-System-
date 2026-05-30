@@ -67,6 +67,9 @@ export async function persistTicketAnalysis(ticketId: string, title: string, des
         priority: analysis.result.classification.priority,
         riskLevel: analysis.result.riskLevel,
         summary: analysis.result.summary,
+        lifecycleStatus: 'high_priority_detected',
+        correlationId: ticketId,
+        updatesEvent: 'ticket_created',
       });
 
       void createNotificationsForAgents({

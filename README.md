@@ -243,11 +243,12 @@ The selected locale is stored in a `locale` cookie and can be changed from the l
 
 > n8n webhook payload is wrapped in `body`, so `{{$json.event}}` will fail. Use `{{$json.body.event}}`.
 
-### 2) Starter workflow: send one Slack message, then update it
+### 2) Starter workflow: send one Slack message, then keep updating it
 
 This gives you the flow you asked for:
 - `ticket_created` sends "ticket received, waiting for AI analysis"
 - `ai_action_required` edits that same Slack message with AI output
+- `high_priority_ticket`, `ticket_status_changed`, and `ai_action_decided` keep editing that same message
 
 #### 2a) `ticket_created` branch
 
@@ -274,6 +275,13 @@ This gives you the flow you asked for:
 
 If no prior message exists, fallback to `chat.postMessage` so the alert is never lost.
 
+#### 2c) Additional update branches
+
+Use the same lookup key (`{{$json.body.payload.ticketId}}`) and `chat.update` for:
+- `high_priority_ticket` (priority/risk escalation update)
+- `ticket_status_changed` (status transition update)
+- `ai_action_decided` (operator decision update)
+
 ### 3) Event payload notes
 
 `ticket_created` payload now includes:
@@ -292,6 +300,42 @@ If no prior message exists, fallback to `chat.postMessage` so the alert is never
 - `lifecycleStatus=ai_action_required`
 - `correlationId=ticketId`
 - `updatesEvent=ticket_created`
+
+`high_priority_ticket` payload includes:
+- `ticketId`
+- `priority`
+- `riskLevel`
+- `summary`
+- `lifecycleStatus=high_priority_detected`
+- `correlationId=ticketId`
+- `updatesEvent=ticket_created`
+
+`ticket_status_changed` payload includes:
+- `ticketId`
+- `title`
+- `status`
+- `priority`
+- `updatedBy`
+- `lifecycleStatus=ticket_status_changed`
+- `correlationId=ticketId`
+- `updatesEvent=ticket_created`
+
+`ai_action_decided` payload includes:
+- `actionId`
+- `ticketId`
+- `actionType`
+- `decision`
+- `decidedBy`
+- `lifecycleStatus=ai_action_decided`
+- `correlationId=ticketId`
+- `updatesEvent=ai_action_required`
+
+`daily_summary` payload includes:
+- `totalOpenTickets`
+- `statusCounts`
+- `tickets[]`
+- `lifecycleStatus=daily_summary_generated`
+- `correlationId=daily_summary_YYYY-MM-DD`
 
 ### 4) Daily summary cron
 
